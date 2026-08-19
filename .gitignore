@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Environment variables — NEVER commit real credentials
+.env
+
+# Database file — contains data, not source code
+dataops.db
+
+# Logs
+logs/*.log
+
+# Reports (generated at runtime)
+reports/*.txt
+reports/*.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Pytest cache
+.pytest_cache/
+.coverage
+htmlcov/

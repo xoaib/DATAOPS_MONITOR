@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataOps Monitor | Junior Data Engineering Dashboard</title>
+  <meta name="description" content="DataOps Monitor — A junior data engineer pipeline monitoring, validation and incident management dashboard." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ========================= HEADER ========================= -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⬡</span>
+        <div class="logo-text">
+          <h1>DataOps Monitor</h1>
+          <p>Junior Data Engineering Support Dashboard</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-pill" id="api-status">
+          <span class="status-dot"></span>
+          <span>Connecting...</span>
+        </div>
+        <button class="btn btn-secondary" id="btn-refresh" onclick="loadDashboard()">
+          ↺ Refresh
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================= MAIN ========================= -->
+  <main class="main-content">
+
+    <!-- ---- Toast Notification ---- -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ========================= SUMMARY CARDS ========================= -->
+    <section class="section">
+      <h2 class="section-title">Pipeline Overview</h2>
+      <div class="cards-grid" id="stats-cards">
+        <div class="card" id="card-total">
+          <div class="card-icon">▶</div>
+          <div class="card-value" id="stat-total">—</div>
+          <div class="card-label">Total Runs</div>
+        </div>
+        <div class="card card-success" id="card-success">
+          <div class="card-icon">✓</div>
+          <div class="card-value" id="stat-success">—</div>
+          <div class="card-label">Successful</div>
+        </div>
+        <div class="card card-failed" id="card-failed">
+          <div class="card-icon">✗</div>
+          <div class="card-value" id="stat-failed">—</div>
+          <div class="card-label">Failed</div>
+        </div>
+        <div class="card card-incidents" id="card-incidents">
+          <div class="card-icon">⚑</div>
+          <div class="card-value" id="stat-incidents">—</div>
+          <div class="card-label">Open Incidents</div>
+        </div>
+        <div class="card card-warning" id="card-validation">
+          <div class="card-icon">⚠</div>
+          <div class="card-value" id="stat-validation">—</div>
+          <div class="card-label">Validation Issues</div>
+        </div>
+        <div class="card card-records" id="card-records">
+          <div class="card-icon">◈</div>
+          <div class="card-value" id="stat-records">—</div>
+          <div class="card-label">Records Processed</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= RUN PIPELINE ========================= -->
+    <section class="section">
+      <h2 class="section-title">Run Pipeline</h2>
+      <div class="run-pipeline-panel">
+        <div class="run-controls">
+          <div class="form-group">
+            <label for="pipeline-select">Pipeline</label>
+            <select id="pipeline-select">
+              <option value="Customer Load|data/input/customers.csv">Customer Load (customers.csv)</option>
+              <option value="Order Load|data/input/orders.csv">Order Load (orders.csv)</option>
+              <option value="Customer Load|data/test_cases/duplicate_records.csv">⚠ Test: Duplicate Records</option>
+              <option value="Customer Load|data/test_cases/missing_column.csv">⚠ Test: Missing Column</option>
+              <option value="Customer Load|data/test_cases/null_values.csv">⚠ Test: NULL Values</option>
+              <option value="Order Load|data/test_cases/invalid_values.csv">⚠ Test: Invalid Values</option>
+              <option value="Customer Load|data/test_cases/empty_file.csv">⚠ Test: Empty File</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-run" id="btn-run-pipeline" onclick="runPipeline()">
+            ▶ Run Pipeline
+          </button>
+        </div>
+        <div class="run-result" id="run-result" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- ========================= PIPELINE RUNS TABLE ========================= -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Pipeline Runs</h2>
+        <span class="badge" id="runs-count">0 runs</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table" id="runs-table">
+          <thead>
+            <tr>
+              <th>Run ID</th>
+              <th>Pipeline</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Records</th>
+              <th>Status</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody id="runs-tbody">
+            <tr><td colspan="7" class="empty-state">No pipeline runs yet. Run a pipeline to get started.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========================= VALIDATION RESULTS ========================= -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Validation Results</h2>
+        <button class="btn btn-secondary btn-sm" onclick="loadValidationResults()">Refresh</button>
+      </div>
+      <div id="validation-panel">
+        <p class="empty-state">Run a pipeline to see validation results.</p>
+      </div>
+    </section>
+
+    <!-- ========================= INCIDENTS ========================= -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Incidents</h2>
+        <span class="badge badge-alert" id="incidents-count">0 open</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table" id="incidents-table">
+          <thead>
+            <tr>
+              <th>Incident</th>
+              <th>Pipeline</th>
+              <th>Issue</th>
+              <th>Severity</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="incidents-tbody">
+            <tr><td colspan="7" class="empty-state">No incidents. All pipelines are healthy.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========================= OPERATIONAL REPORT ========================= -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Operational Report</h2>
+        <button class="btn btn-secondary btn-sm" id="btn-report" onclick="generateReport()">Generate Report</button>
+      </div>
+      <div id="report-panel">
+        <p class="empty-state">Click "Generate Report" to view today's operational summary.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================= INCIDENT MODAL ========================= -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+  <div class="modal" id="incident-modal">
+    <div class="modal-header">
+      <h3 id="modal-incident-id">INC0001</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="incident-meta" id="modal-meta">
+        <!-- Filled by JS -->
+      </div>
+
+      <div class="form-group">
+        <label for="modal-status">Update Status</label>
+        <select id="modal-status">
+          <option value="OPEN">OPEN</option>
+          <option value="INVESTIGATING">INVESTIGATING</option>
+          <option value="RESOLVED">RESOLVED</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-severity">Severity</label>
+        <select id="modal-severity">
+          <option value="LOW">LOW</option>
+          <option value="MEDIUM">MEDIUM</option>
+          <option value="HIGH">HIGH</option>
+          <option value="CRITICAL">CRITICAL</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-notes">Add Work Notes</label>
+        <textarea id="modal-notes" rows="3" placeholder="e.g. Checked source file and identified duplicate customer_id 102..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-resolution">Resolution</label>
+        <textarea id="modal-resolution" rows="2" placeholder="e.g. Removed duplicate record and successfully reran pipeline."></textarea>
+      </div>
+
+      <div class="work-notes-history" id="modal-notes-history"></div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="btn-update-incident" onclick="submitIncidentUpdate()">
+          Update Incident
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
